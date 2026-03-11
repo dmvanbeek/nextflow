@@ -24,9 +24,8 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cloud.google.GoogleOpts
 import nextflow.cloud.google.util.GcsBashLib
-import nextflow.executor.BashWrapperBuilder
+import nextflow.executor.SimpleFileCopyStrategy
 import nextflow.processor.TaskBean
-import nextflow.processor.TaskRun
 import nextflow.util.Duration
 import nextflow.util.Escape
 
@@ -37,7 +36,7 @@ import nextflow.util.Escape
  */
 @Slf4j
 @CompileStatic
-class GoogleBatchFileCopyStrategy extends BashWrapperBuilder implements GoogleBatchLauncherSpec {
+class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy implements GoogleBatchLauncherSpec {
 
     private final GoogleOpts opts
     private int maxParallelTransfers = 16
@@ -50,13 +49,8 @@ class GoogleBatchFileCopyStrategy extends BashWrapperBuilder implements GoogleBa
         super(task)
         this.opts = opts
 
-        def launcherTask = new TaskBean()
-        launcherTask.workDir = task.workDir
-        launcherTask.targetDir = task.targetDir
-        launcherTask.arrayWorkDirs = task.arrayWorkDirs
-        launcherTask.arrayInputFiles = task.arrayInputFiles
+        def launcherTask = task.clone()
         launcherTask.inputFiles = new HashMap(task.inputFiles) // shallow copy of the map
-        launcherTask.input = task.input
 
         this.scriptLauncher = new GoogleBatchScriptLauncher(launcherTask, remoteBinDir)
                 .withConfig(opts)
@@ -89,7 +83,10 @@ class GoogleBatchFileCopyStrategy extends BashWrapperBuilder implements GoogleBa
             return null
         }
 
-        final escaped = patterns.collect { Escape.path(it) }
+        final escaped = new ArrayList(patterns.size())
+        for( String it : patterns ) {
+            escaped.add(Escape.path(it))
+        }
         final targetPath = toUri(targetDir)
 
         return """
