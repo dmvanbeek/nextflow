@@ -44,9 +44,23 @@ class GoogleBatchFileCopyStrategy extends BashWrapperBuilder implements GoogleBa
     private int maxTransferAttempts = 5
     private Duration delayBetweenAttempts = Duration.of('10s')
 
-    GoogleBatchFileCopyStrategy(TaskBean task, GoogleOpts opts) {
+    private final GoogleBatchScriptLauncher scriptLauncher
+
+    GoogleBatchFileCopyStrategy(TaskBean task, GoogleOpts opts, Path remoteBinDir, boolean isArray) {
         super(task)
         this.opts = opts
+
+        def launcherTask = new TaskBean()
+        launcherTask.workDir = task.workDir
+        launcherTask.targetDir = task.targetDir
+        launcherTask.arrayWorkDirs = task.arrayWorkDirs
+        launcherTask.arrayInputFiles = task.arrayInputFiles
+        launcherTask.inputFiles = new HashMap(task.inputFiles) // shallow copy of the map
+        launcherTask.input = task.input
+
+        this.scriptLauncher = new GoogleBatchScriptLauncher(launcherTask, remoteBinDir)
+                .withConfig(opts)
+                .withIsArray(isArray)
     }
 
     @Override
@@ -119,18 +133,17 @@ class GoogleBatchFileCopyStrategy extends BashWrapperBuilder implements GoogleBa
 
     @Override
     List<Volume> getVolumes() {
-        // when using gcloud for file transfer, we don't need to mount GCS buckets with gcsfuse
-        return []
+        return scriptLauncher.getVolumes()
     }
 
     @Override
     List<String> getContainerMounts() {
-        return []
+        return scriptLauncher.getContainerMounts()
     }
 
     @Override
     String runCommand() {
-        "trap \"{ cp ${TaskRun.CMD_LOG} ${workDir}/${TaskRun.CMD_LOG}; }\" EXIT; /bin/bash ${workDir}/${TaskRun.CMD_RUN} 2>&1 | tee ${TaskRun.CMD_LOG}"
+        return scriptLauncher.runCommand()
     }
 
     static protected String toUri(Path path) {
