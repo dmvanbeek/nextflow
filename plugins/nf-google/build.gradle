@@ -65,6 +65,8 @@ dependencies {
     testImplementation(testFixtures(project(":nextflow")))
     testImplementation "org.apache.groovy:groovy:4.0.30"
     testImplementation "org.apache.groovy:groovy-nio:4.0.30"
+    testImplementation "com.google.cloud:google-cloud-nio:0.128.5:tests"
+    testImplementation "com.google.cloud:google-cloud-storage:2.58.0:tests"
 }
 
 test {

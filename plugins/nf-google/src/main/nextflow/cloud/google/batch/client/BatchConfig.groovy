@@ -75,6 +75,12 @@ class BatchConfig implements ConfigScope {
 
     @ConfigOption
     @Description("""
+        The strategy for handling file transfers in Google Batch. Can be either `gcsfuse` or `gcloud`. (default: `gcsfuse`).
+    """)
+    final String fileHandlingMode
+
+    @ConfigOption
+    @Description("""
         List of custom mount options for `gcsfuse` (default: `['-o rw', '-implicit-dirs']`).
     """)
     final List<String> gcsfuseOptions
@@ -145,12 +151,15 @@ class BatchConfig implements ConfigScope {
     """)
     final boolean usePrivateAddress
 
+    boolean getUseGcsfuse() { fileHandlingMode == 'gcsfuse' }
+
     BatchConfig(Map opts) {
         allowedLocations = opts.allowedLocations as List<String> ?: Collections.emptyList()
         autoRetryExitCodes = opts.autoRetryExitCodes as List<Integer> ?: DEFAULT_RETRY_LIST
         bootDiskImage = opts.bootDiskImage
         bootDiskSize = opts.bootDiskSize as MemoryUnit
         cpuPlatform = opts.cpuPlatform
+        fileHandlingMode = opts.fileHandlingMode ?: 'gcsfuse'
         gcsfuseOptions = opts.gcsfuseOptions as List<String> ?: DEFAULT_GCSFUSE_OPTS
         installGpuDrivers = opts.installGpuDrivers as boolean
         installOpsAgent = opts.installOpsAgent as boolean

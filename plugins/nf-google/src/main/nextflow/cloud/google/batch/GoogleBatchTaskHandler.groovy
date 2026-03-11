@@ -167,8 +167,12 @@ class GoogleBatchTaskHandler extends TaskHandler implements FusionAwareTask {
         if( fusionEnabled() ) {
             return fusionLauncher()
         }
+
+        final taskBean = task.toTaskBean()
+        if( batchConfig.fileHandlingMode == 'gcloud' ) {
+            return new GoogleBatchFileCopyStrategy(taskBean, executor.googleOpts)
+        }
         else {
-            final taskBean = task.toTaskBean()
             return new GoogleBatchScriptLauncher(taskBean, executor.remoteBinDir)
                 .withConfig(executor.googleOpts)
                 .withIsArray(task.isArray())
