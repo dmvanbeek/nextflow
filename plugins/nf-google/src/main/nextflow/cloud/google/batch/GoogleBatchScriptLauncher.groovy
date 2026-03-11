@@ -26,6 +26,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cloud.google.GoogleOpts
 import nextflow.executor.BashWrapperBuilder
+import nextflow.executor.ScriptFileCopyStrategy
 import nextflow.extension.FilesEx
 import nextflow.processor.TaskBean
 import nextflow.processor.TaskRun
