@@ -36,25 +36,14 @@ import nextflow.util.Escape
  */
 @Slf4j
 @CompileStatic
-class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy implements GoogleBatchLauncherSpec {
+class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
 
-    private final GoogleOpts opts
     private int maxParallelTransfers = 16
     private int maxTransferAttempts = 5
     private Duration delayBetweenAttempts = Duration.of('10s')
 
-    private final GoogleBatchScriptLauncher scriptLauncher
-
-    GoogleBatchFileCopyStrategy(TaskBean task, GoogleOpts opts, Path remoteBinDir, boolean isArray) {
+    GoogleBatchFileCopyStrategy(TaskBean task) {
         super(task)
-        this.opts = opts
-
-        def launcherTask = task.clone()
-        launcherTask.inputFiles = new HashMap(task.inputFiles) // shallow copy of the map
-
-        this.scriptLauncher = new GoogleBatchScriptLauncher(launcherTask, remoteBinDir)
-                .withConfig(opts)
-                .withIsArray(isArray)
     }
 
     @Override
@@ -128,20 +117,7 @@ class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy implements Goog
         return "echo start | nxf_gcs_upload - '$targetPath'"
     }
 
-    @Override
-    List<Volume> getVolumes() {
-        return scriptLauncher.getVolumes()
-    }
 
-    @Override
-    List<String> getContainerMounts() {
-        return scriptLauncher.getContainerMounts()
-    }
-
-    @Override
-    String runCommand() {
-        return scriptLauncher.runCommand()
-    }
 
     static protected String toUri(Path path) {
         if( path instanceof CloudStoragePath ) {
